@@ -14,40 +14,21 @@ import com.prafullkumar.orbit.home.utility.UtilityViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun PagerScreen(
-    navController: NavHostController
-) {
+fun PagerScreen(navController: NavHostController) {
     val viewModels = mutableMapOf<PagerScreens, ViewModel>()
 
-    val pagerState = rememberPagerState(
-        initialPage = 0
-    ) {
-        2
-    }
+    val pagerState = rememberPagerState(initialPage = 0) { 2 }
 
-    HorizontalPager(
-        state = pagerState,
-        modifier = Modifier.fillMaxSize(),
-        key = { it }
-    ) { page ->
+    HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize(), key = { it }) { page ->
         when (page) {
             0 -> {
                 val homeViewModel: HomeViewModel = koinViewModel()
-                HomeScreen(
-                    navController = navController,
-                    viewModel = homeViewModel
-                )
+                HomeScreen(navController = navController, viewModel = homeViewModel)
             }
-
             1 -> {
                 val utilityViewModel: UtilityViewModel = koinViewModel()
-                UtilityScreen(
-                    navController = navController,
-                    viewModel = utilityViewModel
-                )
+                UtilityScreen(navController = navController, viewModel = utilityViewModel)
             }
         }
     }
-
-
 }

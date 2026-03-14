@@ -26,16 +26,12 @@ class OrbitLauncher : Application() {
         startKoin {
             androidContext(this@OrbitLauncher)
             modules(
-                databaseModule,
-                hiddenAppsModule,
-                homeModule,
-                usageModule,
-                module {
-
-                    viewModel {
-                        OnBoardingViewModel(get())
-                    }
-                },
+                    databaseModule,
+                    hiddenAppsModule,
+                    homeModule,
+                    usageModule,
+                    com.prafullkumar.orbit.home.habits.habitModule,
+                    module { viewModel { OnBoardingViewModel(get()) } },
             )
         }
     }
@@ -43,40 +39,28 @@ class OrbitLauncher : Application() {
 
 val databaseModule = module {
     single<InstalledDatabase> {
-        Room.databaseBuilder(
-            get(),
-            InstalledDatabase::class.java,
-            "installed_database"
-        )
-            .fallbackToDestructiveMigration()
-            .addCallback(object : RoomDatabase.Callback() {
-                override fun onCreate(db: SupportSQLiteDatabase) {
-                    super.onCreate(db)
-                    DatabasePopulator.populateDatabase(
-                        populateDatabaseUseCase = get<PopulateDatabaseUseCase>(),
-                        context = get<Application>()
-                    )
-                }
-            }
-            ).build()
+        Room.databaseBuilder(get(), InstalledDatabase::class.java, "installed_database")
+                .fallbackToDestructiveMigration()
+                .addCallback(
+                        object : RoomDatabase.Callback() {
+                            override fun onCreate(db: SupportSQLiteDatabase) {
+                                super.onCreate(db)
+                                DatabasePopulator.populateDatabase(
+                                        populateDatabaseUseCase = get<PopulateDatabaseUseCase>(),
+                                        context = get<Application>()
+                                )
+                            }
+                        }
+                )
+                .build()
     }
-    single {
-        get<InstalledDatabase>().installedAppsDao()
-    }
+    single { get<InstalledDatabase>().installedAppsDao() }
     single<FavDatabase> {
-        Room.databaseBuilder(
-            get(),
-            FavDatabase::class.java,
-            "fav_database"
-        ).fallbackToDestructiveMigration().build()
+        Room.databaseBuilder(get(), FavDatabase::class.java, "fav_database")
+                .fallbackToDestructiveMigration()
+                .build()
     }
-    single<FavDao> {
-        get<FavDatabase>().favDao()
-    }
-    single<InstalledAppsRepository> {
-        InstalledAppsRepository(get())
-    }
-    single<PopulateDatabaseUseCase> {
-        PopulateDatabaseUseCase(get())
-    }
+    single<FavDao> { get<FavDatabase>().favDao() }
+    single<InstalledAppsRepository> { InstalledAppsRepository(get()) }
+    single<PopulateDatabaseUseCase> { PopulateDatabaseUseCase(get()) }
 }
