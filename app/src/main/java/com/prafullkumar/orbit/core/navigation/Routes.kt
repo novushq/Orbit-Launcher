@@ -43,4 +43,7 @@ sealed interface HomeRoutes {
 
     @Serializable
     data object DrawerSettings : HomeRoutes
+
+    @Serializable
+    data object HabitsScreen : HomeRoutes
 }
