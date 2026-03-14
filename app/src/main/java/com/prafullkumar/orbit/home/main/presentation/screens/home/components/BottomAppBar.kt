@@ -15,97 +15,55 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Message
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun BottomAppBar(
-    modifier: Modifier,
-    onPhoneClick: () -> Unit, onMessagesClick: () -> Unit, onDrawerClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    onPhoneClick: () -> Unit,
+    onMessagesClick: () -> Unit,
+    onDrawerClick: () -> Unit,
     onCameraClick: () -> Unit = {}
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 32.dp, vertical = 20.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Left side - Phone and Messages
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .clickable(onClick = onPhoneClick)
-                    .background(
-                        MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.8f), CircleShape
-                    ), contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Phone,
-                    contentDescription = "Phone",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .clickable(onClick = onMessagesClick)
-                    .background(
-                        MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.8f), CircleShape
-                    ), contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Message,
-                    contentDescription = "Messages",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .clickable(onClick = onCameraClick)
-                    .background(
-                        MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.8f), CircleShape
-                    ), contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.CameraAlt,
-                    contentDescription = "Camera",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
+        // Left group: Phone, Messages, Camera
+        Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+            DockButton(Icons.Default.Phone, "Phone", onPhoneClick)
+            DockButton(Icons.Default.Message, "Messages", onMessagesClick)
+            DockButton(Icons.Default.CameraAlt, "Camera", onCameraClick)
         }
+        // Right: Drawer
+        DockButton(Icons.AutoMirrored.Rounded.List, "App Drawer", onDrawerClick)
+    }
+}
 
-        // Right side - Drawer
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .clickable(onClick = onDrawerClick)
-                .background(
-                    MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.8f), CircleShape
-                ), contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.List,
-                contentDescription = "App Drawer",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp)
-            )
-        }
+@Composable
+private fun DockButton(icon: ImageVector, contentDescription: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(52.dp)
+            .clip(CircleShape)
+            .background(Color(0xFF1A1A1A))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = Color(0xFFAAAAAA),
+            modifier = Modifier.size(22.dp)
+        )
     }
 }

@@ -7,5 +7,5 @@ import org.koin.dsl.module
 
 val usageModule = module {
     viewModel { UsageScreenViewModel(get()) }
-    viewModel { AppDetailViewModel(get(), get()) }
+    viewModel { (packageName: String) -> AppDetailViewModel(packageName, get()) }
 }

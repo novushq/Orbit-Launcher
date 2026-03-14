@@ -21,6 +21,9 @@ sealed interface Routes {
 
     @Serializable
     data object OnboardingScreen : Routes
+
+    @Serializable
+    data object AppBlockerScreen : Routes
 }
 
 sealed interface SettingsRoutes {

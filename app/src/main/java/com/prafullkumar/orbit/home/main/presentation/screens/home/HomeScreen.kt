@@ -3,10 +3,7 @@ package com.prafullkumar.orbit.home.main.presentation.screens.home
 import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -18,11 +15,11 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,94 +36,88 @@ import com.prafullkumar.orbit.home.main.presentation.screens.home.components.Wat
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(viewModel: HomeViewModel, navController: NavHostController) {
     val context = LocalContext.current
     val groupedApps by viewModel.groupedApps.collectAsStateWithLifecycle()
-    val favApps by viewModel.favApps.collectAsState()
+    val favApps by viewModel.favApps.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
 
-    val showBottomSheet = rememberSaveable { mutableStateOf(false) }
-    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            containerColor = Color.Transparent,
-            bottomBar = {
-                BottomAppBar(
-                        modifier = Modifier,
-                        onPhoneClick = { scope.launch { openIntent(context, Intent.ACTION_DIAL) } },
-                        onMessagesClick = {
-                            scope.launch {
-                                val intent =
-                                        Intent(Intent.ACTION_MAIN).apply {
-                                            addCategory(Intent.CATEGORY_APP_MESSAGING)
-                                        }
-                                openIntent(context, intent = intent, action = "")
-                            }
-                        },
-                        onDrawerClick = { scope.launch { showBottomSheet.value = true } },
-                        onCameraClick = { viewModel.launchCamera(context) }
-                )
-            }
-    ) { paddingValues ->
-        Box(Modifier.fillMaxSize().padding(paddingValues)) {
-            Column(
-                    Modifier.fillMaxSize()
-                            .pointerInput(Unit) {
-                                detectVerticalDragGestures { _, dragAmount ->
-                                    if (dragAmount < -40) {
-                                        // Dragging up
-                                        scope.launch { showBottomSheet.value = true }
-                                    }
-                                }
-                            }
-                            .verticalScroll(rememberScrollState())
-                            .padding(horizontal = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(32.dp)
-            ) {
-                WatchComposable(viewModel)
-                UsageComposable(viewModel, navController)
-                FavouritesSection(favApps, viewModel, context)
-                Spacer(Modifier.height(32.dp))
-            }
-        }
+    var showDrawer by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-        if (showBottomSheet.value) {
-            ModalBottomSheet(
-                    onDismissRequest = { showBottomSheet.value = false },
-                    sheetState = bottomSheetState,
-                    dragHandle = null
-            ) {
-                AppDrawerScreen(
-                        viewModel = koinViewModel(),
-                        navController = navController,
-                        groupedApps = groupedApps,
-                        onDismiss = {
-                            scope.launch {
-                                bottomSheetState.hide()
-                                showBottomSheet.value = false
-                            }
-                        }
-                )
-            }
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = Color.Transparent,
+        bottomBar = {
+            BottomAppBar(
+                onPhoneClick = { openIntent(context, Intent.ACTION_DIAL) },
+                onMessagesClick = {
+                    val i = Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_MESSAGING) }
+                    openIntent(context, intent = i, action = "")
+                },
+                onDrawerClick = { showDrawer = true },
+                onCameraClick = { viewModel.launchCamera(context) }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .pointerInput(Unit) {
+                    detectVerticalDragGestures { _, dragAmount ->
+                        if (dragAmount < -40) { scope.launch { showDrawer = true } }
+                    }
+                }
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(Modifier.weight(1f))
+
+            // Clock + date + greeting
+            WatchComposable(viewModel)
+
+            Spacer(Modifier.height(8.dp))
+
+            // Screen time
+            UsageComposable(viewModel, navController)
+
+            Spacer(Modifier.height(32.dp))
+
+            // Pinned favorites
+            FavouritesSection(favApps, viewModel, context)
+
+            Spacer(Modifier.weight(1f))
+        }
+    }
+
+    if (showDrawer) {
+        ModalBottomSheet(
+            onDismissRequest = { showDrawer = false },
+            sheetState = sheetState,
+            dragHandle = null,
+            containerColor = Color(0xFF0D0D0D)
+        ) {
+            AppDrawerScreen(
+                viewModel = koinViewModel(),
+                navController = navController,
+                groupedApps = groupedApps,
+                onDismiss = {
+                    scope.launch { sheetState.hide(); showDrawer = false }
+                }
+            )
         }
     }
 }
 
 fun openIntent(context: Context, action: String, intent: Intent? = null) {
     try {
-        intent?.let {
-            it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(intent)
-        }
-                ?: run {
-                    val intent = Intent(action)
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    context.startActivity(intent)
-                }
+        val i = intent ?: Intent(action)
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(i)
     } catch (e: Exception) {
-        println(e.message)
+        android.util.Log.w("HomeScreen", "Failed to launch intent: action=$action", e)
     }
 }

@@ -13,6 +13,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
+import com.prafullkumar.orbit.appblocker.navigation.appBlockerGraph
 import com.prafullkumar.orbit.home.main.homeRoutes
 import com.prafullkumar.orbit.onBoarding.OnBoardingScreen
 import com.prafullkumar.orbit.settings.settingsGraph
@@ -37,6 +38,7 @@ fun AppNavigation(
         settingsGraph(navController)
         usageGraph(navController)
         hiddenAppsNavGraph(navController, context)
+        appBlockerGraph(navController)
     }
 }
 

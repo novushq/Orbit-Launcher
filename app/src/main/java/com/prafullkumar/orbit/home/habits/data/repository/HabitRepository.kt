@@ -209,19 +209,23 @@ class HabitRepository(private val dao: HabitDao) {
     // ── Mappers ───────────────────────────────────────────────────────────────
 
     private fun HabitEntity.toDomain() = Habit(
-        id = id, name = name, habitType = habitType, difficulty = difficulty,
+        id = id, name = name, emoji = emoji, colorIndex = colorIndex,
+        habitType = habitType, difficulty = difficulty,
         targetValue = targetValue,
         targetDays = targetDays.split(",").mapNotNull { it.trim().toIntOrNull() },
         unit = unit, defaultEnvironment = defaultEnvironment,
-        note = note, createdAt = createdAt, color = color
+        note = note, reminderTime = reminderTime, isActive = isActive,
+        createdAt = createdAt
     )
 
     private fun Habit.toEntity() = HabitEntity(
-        id = id, name = name, habitType = habitType, difficulty = difficulty,
+        id = id, name = name, emoji = emoji, colorIndex = colorIndex,
+        habitType = habitType, difficulty = difficulty,
         targetValue = targetValue,
         targetDays = targetDays.joinToString(","),
         unit = unit, defaultEnvironment = defaultEnvironment,
-        note = note, createdAt = createdAt, color = color
+        note = note, reminderTime = reminderTime, isActive = isActive,
+        createdAt = createdAt
     )
 
     private fun HabitLogEntity.toDomain() = HabitLog(

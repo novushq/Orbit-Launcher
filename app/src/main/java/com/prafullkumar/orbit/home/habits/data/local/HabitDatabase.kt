@@ -30,7 +30,7 @@ class HabitConverters {
 
 @Database(
     entities = [HabitEntity::class, HabitLogEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(HabitConverters::class)
