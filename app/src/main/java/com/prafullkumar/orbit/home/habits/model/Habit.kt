@@ -4,15 +4,18 @@ package com.prafullkumar.orbit.home.habits.model
 data class Habit(
     val id: Long = 0,
     val name: String,
+    val emoji: String = "",
+    val colorIndex: Int = 0,
     val habitType: HabitType,
     val difficulty: HabitDifficulty,
     val targetValue: Int = 1,
-    val targetDays: List<Int> = emptyList(), // 1=Mon..7=Sun
+    val targetDays: List<Int> = emptyList(), // comma-separated Calendar ints
     val unit: String = "",
     val defaultEnvironment: EnvironmentTag = EnvironmentTag.ANY,
     val note: String = "",
+    val reminderTime: String? = null,
+    val isActive: Boolean = true,
     val createdAt: Long = System.currentTimeMillis(),
-    val color: Int = 0,
     // Computed insights (filled by repository)
     val currentStreak: Int = 0,
     val longestStreak: Int = 0,
