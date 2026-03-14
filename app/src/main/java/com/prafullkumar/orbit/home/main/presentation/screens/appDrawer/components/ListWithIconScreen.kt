@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -57,59 +58,100 @@ fun AppListWithIcons(
     searchQuery: String,
     navController: NavController
 ) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
-            .pointerInput(Unit) {
-                detectDragGestures { change, _ ->
-                    scope.launch {
-                        change.consume()
-                        focusManager.clearFocus()
-                        keyboardController?.hide()
+    val listState = rememberLazyListState()
+
+    val filteredGroups = remember(groupedApps, searchQuery) {
+        groupedApps.filter { (_, apps) ->
+            apps.any { it.label.contains(searchQuery, ignoreCase = true) }
+        }
+    }
+    val letterToIndex = remember(filteredGroups) {
+        var idx = 0
+        filteredGroups.mapValues { (_, apps) ->
+            val headerIdx = idx
+            idx += 1 + apps.size  // header + app items
+            headerIdx
+        }
+    }
+    val letters = remember(filteredGroups) { filteredGroups.keys.toList() }
+    var selectedLetter by remember { mutableStateOf<Char?>(null) }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .pointerInput(Unit) {
+                    detectDragGestures { change, _ ->
+                        scope.launch {
+                            change.consume()
+                            focusManager.clearFocus()
+                            keyboardController?.hide()
+                        }
+                    }
+                },
+            contentPadding = PaddingValues(
+                vertical = 12.dp,
+                end = if (searchQuery.isEmpty()) 28.dp else 0.dp
+            )
+        ) {
+            filteredGroups.forEach { (letter, apps) ->
+                item(key = "header_$letter") {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 12.dp)
+                            .background(
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                                RoundedCornerShape(12.dp)
+                            )
+                            .padding(vertical = 8.dp, horizontal = 16.dp)
+                    ) {
+                        Text(
+                            text = letter.toString(),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
                 }
-            },
-        contentPadding = PaddingValues(vertical = 12.dp)
-    ) {
-        groupedApps.filter {
-            it.value.any { appInfo ->
-                appInfo.label.contains(searchQuery, ignoreCase = true)
-            }
-        }.forEach { (letter, apps) ->
-            item(key = "header_$letter") {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 12.dp)
-                        .background(
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-                            RoundedCornerShape(12.dp)
-                        )
-                        .padding(vertical = 8.dp, horizontal = 16.dp)
-                ) {
-                    Text(
-                        text = letter.toString(),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold
+                items(apps.filter {
+                    it.label.contains(searchQuery, ignoreCase = true)
+                }, key = { it.packageName }) { app ->
+                    AppItemWithIcon(
+                        app = app,
+                        onClick = { launchApp(context, app) },
+                        modifier = Modifier.animateItem(
+                            fadeInSpec = tween(300),
+                            placementSpec = tween(300)
+                        ),
+                        viewModel = viewModel,
+                        navController
                     )
                 }
             }
-            items(apps.filter {
-                it.label.contains(searchQuery, ignoreCase = true)
-            }, key = { it.packageName }) { app ->
-                AppItemWithIcon(
-                    app = app,
-                    onClick = { launchApp(context, app) },
-                    modifier = Modifier.animateItem(
-                        fadeInSpec = tween(300),
-                        placementSpec = tween(300)
+        }
+
+        // Alphabet sidebar: only visible when not actively searching
+        if (searchQuery.isEmpty() && letters.isNotEmpty()) {
+            AlphabetSidebar(
+                letters = letters,
+                selectedLetter = selectedLetter,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(
+                        top = paddingValues.calculateTopPadding(),
+                        end = 4.dp
                     ),
-                    viewModel = viewModel,
-                    navController
-                )
-            }
+                onLetterSelected = { letter ->
+                    selectedLetter = letter
+                    if (letter != null) {
+                        val index = letterToIndex[letter] ?: return@AlphabetSidebar
+                        scope.launch { listState.scrollToItem(index) }
+                    }
+                }
+            )
         }
     }
 }

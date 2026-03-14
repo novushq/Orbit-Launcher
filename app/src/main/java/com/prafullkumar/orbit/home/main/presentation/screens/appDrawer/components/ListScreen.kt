@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.input.pointer.pointerInput
@@ -46,46 +48,87 @@ fun AppList(
     searchQuery: String,
     navController: NavController
 ) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
-            .pointerInput(Unit) {
-                detectDragGestures { change, _ ->
-                    scope.launch {
-                        change.consume()
-                        focusManager.clearFocus()
-                        keyboardController?.hide()
+    val listState = rememberLazyListState()
+
+    // Build a stable map: letter → flat index of its header in the LazyColumn.
+    // Only recalculated when groupedApps changes (not on every recomposition).
+    val filteredGroups = remember(groupedApps, searchQuery) {
+        groupedApps.filter { (_, apps) ->
+            apps.any { it.label.contains(searchQuery, ignoreCase = true) }
+        }
+    }
+    val letterToIndex = remember(filteredGroups) {
+        var idx = 0
+        filteredGroups.mapValues { (_, apps) ->
+            val headerIdx = idx
+            idx += 1 + apps.size  // header item + app items
+            headerIdx
+        }
+    }
+    val letters = remember(filteredGroups) { filteredGroups.keys.toList() }
+    var selectedLetter by remember { mutableStateOf<Char?>(null) }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .pointerInput(Unit) {
+                    detectDragGestures { change, _ ->
+                        scope.launch {
+                            change.consume()
+                            focusManager.clearFocus()
+                            keyboardController?.hide()
+                        }
+                    }
+                },
+            contentPadding = PaddingValues(vertical = 8.dp, end = if (searchQuery.isEmpty()) 28.dp else 0.dp)
+        ) {
+            filteredGroups.forEach { (letter, apps) ->
+                item(key = "header_$letter") {
+                    Text(
+                        text = letter.toString(),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.padding(top = 20.dp, bottom = 8.dp, start = 24.dp)
+                    )
+                }
+                items(apps.filter {
+                    it.label.contains(searchQuery, ignoreCase = true)
+                }, key = { it.packageName }) { app ->
+                    AppItemRow(
+                        app = app,
+                        onClick = { launchApp(context, app) },
+                        modifier = Modifier.animateItem(
+                            fadeInSpec = tween(300), placementSpec = tween(300)
+                        ),
+                        viewModel = viewModel,
+                        navController
+                    )
+                }
+            }
+        }
+
+        // Alphabet sidebar: only visible when not actively searching
+        if (searchQuery.isEmpty() && letters.isNotEmpty()) {
+            AlphabetSidebar(
+                letters = letters,
+                selectedLetter = selectedLetter,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(
+                        top = paddingValues.calculateTopPadding(),
+                        end = 4.dp
+                    ),
+                onLetterSelected = { letter ->
+                    selectedLetter = letter
+                    if (letter != null) {
+                        val index = letterToIndex[letter] ?: return@AlphabetSidebar
+                        scope.launch { listState.scrollToItem(index) }
                     }
                 }
-            }, contentPadding = PaddingValues(vertical = 8.dp)
-    ) {
-        groupedApps.filter {
-            it.value.any { appInfo ->
-                appInfo.label.contains(searchQuery, ignoreCase = true)
-            }
-        }.forEach { (letter, apps) ->
-            item(key = "header_$letter") {
-                Text(
-                    text = letter.toString(),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.padding(top = 20.dp, bottom = 8.dp, start = 24.dp)
-                )
-            }
-            items(apps.filter {
-                it.label.contains(searchQuery, ignoreCase = true)
-            }, key = { it.packageName }) { app ->
-                AppItemRow(
-                    app = app,
-                    onClick = { launchApp(context, app) },
-                    modifier = Modifier.animateItem(
-                        fadeInSpec = tween(300), placementSpec = tween(3000)
-                    ),
-                    viewModel = viewModel,
-                    navController
-                )
-            }
+            )
         }
     }
 }

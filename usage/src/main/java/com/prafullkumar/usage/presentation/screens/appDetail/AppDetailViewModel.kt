@@ -41,7 +41,10 @@ class AppDetailViewModel(
                 val pm = context.packageManager
                 val appInfo = pm.getApplicationInfo(packageName, 0)
                 val appName = pm.getApplicationLabel(appInfo).toString()
-                val icon = try { pm.getApplicationIcon(packageName) } catch (e: PackageManager.NameNotFoundException) { null }
+                val icon = try { pm.getApplicationIcon(packageName) } catch (e: PackageManager.NameNotFoundException) {
+                    android.util.Log.w("AppDetailViewModel", "Icon not found for $packageName", e)
+                    null
+                }
 
                 val totalTime = AppUsageDetails.getAppUsageTimeToday(context, packageName) ?: 0L
                 val openCount = AppUsageDetails.getNumberOfTimesAppOpens(context, packageName)
