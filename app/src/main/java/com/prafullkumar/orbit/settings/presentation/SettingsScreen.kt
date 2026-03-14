@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.prafullkumar.hiddenapps.HiddenAppRoutes
+import com.prafullkumar.orbit.core.navigation.Routes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,6 +97,11 @@ fun SettingsScreen(
 
             SettingsSection("SCREEN TIME") {
                 SettingsPreferenceRow(title = "Daily screen time goal", subtitle = "5 hours")
+                SettingsPreferenceRow(
+                    title = "App Blocker",
+                    subtitle = "Block apps & set focus sessions",
+                    onClick = { navController.navigate(Routes.AppBlockerScreen) }
+                )
             }
 
             SettingsSection("ABOUT") {
