@@ -197,77 +197,33 @@ object UsageDetails {
         usageStatsManager: UsageStatsManager,
         date: LocalDate = LocalDate.now()
     ): List<UsageStatistics> {
-        // Compute local day boundaries (midnight -> next midnight) in system default zone
         val zone = ZoneId.systemDefault()
         val start = date.atStartOfDay(zone).toInstant().toEpochMilli()
         val end = date.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
 
-        val eventsByPackage = mutableMapOf<String, MutableList<UsageEvents.Event>>()
+        val usageStatsList = usageStatsManager.queryUsageStats(
+            UsageStatsManager.INTERVAL_DAILY,
+            start,
+            end
+        )
 
-        val systemEvents = usageStatsManager.queryEvents(start, end)
-        while (systemEvents.hasNextEvent()) {
-            val event = UsageEvents.Event()
-            systemEvents.getNextEvent(event)
-            // Skip if packageName is null or empty
-            val pkg = event.packageName ?: continue
-            val list = eventsByPackage.getOrPut(pkg) { mutableListOf() }
-            list.add(event)
+        val stats = mutableMapOf<String, Long>()
+        usageStatsList?.forEach { stat ->
+            val pkg = stat.packageName
+            val current = stats[pkg] ?: 0L
+            stats[pkg] = current + stat.totalTimeInForeground
         }
 
-        val stats = mutableListOf<UsageStatistics>()
-
-        eventsByPackage.forEach { (packageName, events) ->
-            // Ensure chronological order
-            events.sortBy { it.timeStamp }
-
-            var sessionStart = 0L
-            var totalTime = 0L
-
-            fun closeSession(closeAt: Long) {
-                val s = if (sessionStart == 0L) start else sessionStart
-                val e = closeAt.coerceAtMost(end)
-                val clampedStart = s.coerceAtLeast(start)
-                val clampedEnd = e.coerceAtLeast(clampedStart)
-                if (clampedEnd > clampedStart) {
-                    totalTime += clampedEnd - clampedStart
-                }
-                sessionStart = 0L
-            }
-
-            events.forEach { e ->
-                when (e.eventType) {
-                    UsageEvents.Event.ACTIVITY_RESUMED,
-                    UsageEvents.Event.MOVE_TO_FOREGROUND -> {
-                        if (sessionStart == 0L) {
-                            sessionStart = e.timeStamp.coerceAtLeast(start)
-                        }
-                    }
-                    UsageEvents.Event.ACTIVITY_PAUSED,
-                    UsageEvents.Event.MOVE_TO_BACKGROUND -> {
-                        // If we never saw a start, assume it started before 'start'
-                        closeSession(e.timeStamp)
-                    }
-                    else -> {
-                        // ignore other events
-                    }
-                }
-            }
-
-            // If a session is still open at end-of-day, close it at 'end'
-            if (sessionStart != 0L) {
-                closeSession(end)
-            }
-
-            stats.add(
-                UsageStatistics(
-                    packageName = packageName,
-                    usageDate = date,
-                    usageDuration = totalTime
-                )
+        val result = stats.map { (pkg, duration) ->
+            UsageStatistics(
+                packageName = pkg,
+                usageDate = date,
+                usageDuration = duration
             )
         }
-        Log.d("UsageDetails", "getDailyStats($date): total apps = ${stats.size}")
-        return stats
+
+        Log.d("UsageDetails", "getDailyStats($date): total apps = ${result.size}")
+        return result
     }
 }
 

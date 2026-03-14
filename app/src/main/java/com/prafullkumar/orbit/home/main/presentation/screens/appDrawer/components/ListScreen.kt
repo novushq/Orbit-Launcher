@@ -83,7 +83,7 @@ fun AppList(
                         }
                     }
                 },
-            contentPadding = PaddingValues(vertical = 8.dp, end = if (searchQuery.isEmpty()) 28.dp else 0.dp)
+            contentPadding = PaddingValues(top = 8.dp, bottom = 8.dp, end = if (searchQuery.isEmpty()) 28.dp else 0.dp)
         ) {
             filteredGroups.forEach { (letter, apps) ->
                 item(key = "header_$letter") {

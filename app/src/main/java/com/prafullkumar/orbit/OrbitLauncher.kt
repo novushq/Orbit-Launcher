@@ -32,6 +32,7 @@ class OrbitLauncher : Application() {
                     usageModule,
                     com.prafullkumar.orbit.home.habits.habitModule,
                     com.prafullkumar.orbit.appblocker.appBlockerModule,
+                    com.prafullkumar.orbit.settings.settingsModule,
                     module { viewModel { OnBoardingViewModel(get()) } },
             )
         }

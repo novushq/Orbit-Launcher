@@ -9,13 +9,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.prafullkumar.orbit.core.navigation.Routes
 import com.prafullkumar.orbit.core.navigation.SettingsRoutes
+import com.prafullkumar.orbit.settings.presentation.SettingsScreen
+import org.koin.androidx.compose.koinViewModel
 
 fun NavGraphBuilder.settingsGraph(
     navController: NavController
 ) {
     navigation<Routes.SettingsScreen>(startDestination = SettingsRoutes.SettingsMain) {
         composable<SettingsRoutes.SettingsMain> {
-            Box(Modifier.fillMaxSize()) {}
+            val viewModel: com.prafullkumar.orbit.settings.presentation.SettingsViewModel = koinViewModel()
+            SettingsScreen(navController = navController, viewModel = viewModel)
         }
     }
 }

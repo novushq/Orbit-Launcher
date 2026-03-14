@@ -72,7 +72,7 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
             habits.collect { habitList ->
                 val momentumScore = repository.getOverallMomentumScore(habitList)
                 val stackingSuggestions = repository.buildStackingSuggestions(habitList)
-                val showOnboarding = habitList.isEmpty()
+                val showOnboarding = false
                 _dashboardState.update {
                     it.copy(
                         habits = habitList,

@@ -92,7 +92,7 @@ fun AppListWithIcons(
                     }
                 },
             contentPadding = PaddingValues(
-                vertical = 12.dp,
+                top = 12.dp, bottom = 12.dp,
                 end = if (searchQuery.isEmpty()) 28.dp else 0.dp
             )
         ) {
