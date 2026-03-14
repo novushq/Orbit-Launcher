@@ -7,8 +7,8 @@ import androidx.navigation.navigation
 import com.prafullkumar.orbit.core.navigation.HomeRoutes
 import com.prafullkumar.orbit.core.navigation.Routes
 import com.prafullkumar.orbit.home.PagerScreen
+import com.prafullkumar.orbit.home.habits.presentation.HabitTrackerRoot
 import com.prafullkumar.orbit.home.main.presentation.screens.drawerSettings.DrawerSettingsScreen
-import com.prafullkumar.orbit.home.main.presentation.screens.home.HomeScreen
 import org.koin.compose.viewmodel.koinViewModel
 
 fun NavGraphBuilder.homeRoutes(navController: NavHostController) {
@@ -18,6 +18,9 @@ fun NavGraphBuilder.homeRoutes(navController: NavHostController) {
         }
         composable<HomeRoutes.DrawerSettings> {
             DrawerSettingsScreen(navController, koinViewModel())
+        }
+        composable<HomeRoutes.HabitsScreen> {
+            HabitTrackerRoot()
         }
     }
 }
